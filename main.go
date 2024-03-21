@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"flag"
 	"fmt"
 	"net/http"
@@ -9,6 +10,13 @@ import (
 )
 
 const API_URL = "https://api-web.nhle.com/v1"
+
+type SVG struct {
+	XMLName xml.Name `xml:"svg"`
+	Width   string   `xml:"width,attr"`
+	Height  string   `xml:"height,attr"`
+	// Add other fields as needed to represent SVG structure
+}
 
 type Config struct {
 	MatchDate       string
@@ -45,6 +53,9 @@ type Game struct {
 		DarkLogo string `json:"darkLogo"`
 		Score    int    `json:"score"`
 	} `json:"homeTeam"`
+	GameOutcome struct {
+		PeriodType string `json:"lastPeriodType"`
+	} `json:"gameOutcome"`
 }
 
 func fetchTeamWeekSchedule(team, matchDate string) {
@@ -75,12 +86,13 @@ func fetchTeamWeekSchedule(team, matchDate string) {
 	fmt.Println("Schedule for ", team, " on ", matchDate)
 	for _, game := range games {
 		fmt.Printf(
-			"%s - %s: %d vs %s: %d\n",
+			"%s - %s: %d vs %s: %d (%s)\n",
 			game.GameDate,
 			game.AwayTeam.Abbrev,
 			game.AwayTeam.Score,
 			game.HomeTeam.Abbrev,
 			game.HomeTeam.Score,
+			game.GameOutcome.PeriodType,
 		)
 	}
 }
@@ -113,12 +125,18 @@ func fetchSchedule(matchDate string) {
 	fmt.Println("Schedule for NHL games on ", matchDate)
 	for _, game := range games {
 		fmt.Printf(
-			"%s: %d vs %s: %d\n",
+			"%s: %d vs %s: %d",
 			game.AwayTeam.Abbrev,
 			game.AwayTeam.Score,
 			game.HomeTeam.Abbrev,
 			game.HomeTeam.Score,
 		)
+		if game.GameOutcome.PeriodType == "OT" {
+			fmt.Println(" (OT)")
+		} else {
+			fmt.Println()
+		}
+
 	}
 }
 
