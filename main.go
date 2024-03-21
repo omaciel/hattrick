@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"encoding/xml"
 	"flag"
 	"fmt"
 	"net/http"
@@ -10,13 +9,6 @@ import (
 )
 
 const API_URL = "https://api-web.nhle.com/v1"
-
-type SVG struct {
-	XMLName xml.Name `xml:"svg"`
-	Width   string   `xml:"width,attr"`
-	Height  string   `xml:"height,attr"`
-	// Add other fields as needed to represent SVG structure
-}
 
 type Config struct {
 	MatchDate       string
@@ -58,6 +50,7 @@ type Game struct {
 	} `json:"gameOutcome"`
 }
 
+// Fetch all available games on specified date for specific team.
 func fetchTeamWeekSchedule(team, matchDate string) {
 	apiURL := fmt.Sprintf("%s/club-schedule/%s/week/%s", API_URL, team, matchDate)
 
@@ -84,19 +77,10 @@ func fetchTeamWeekSchedule(team, matchDate string) {
 
 	games := data.Games
 	fmt.Println("Schedule for ", team, " on ", matchDate)
-	for _, game := range games {
-		fmt.Printf(
-			"%s - %s: %d vs %s: %d (%s)\n",
-			game.GameDate,
-			game.AwayTeam.Abbrev,
-			game.AwayTeam.Score,
-			game.HomeTeam.Abbrev,
-			game.HomeTeam.Score,
-			game.GameOutcome.PeriodType,
-		)
-	}
+	outputGamesInformation(games, true)
 }
 
+// Fetch all available games on specified date.
 func fetchSchedule(matchDate string) {
 	apiURL := fmt.Sprintf("%s/schedule/%s", API_URL, matchDate)
 
@@ -123,7 +107,15 @@ func fetchSchedule(matchDate string) {
 
 	games := data.GameWeek[0].Games
 	fmt.Println("Schedule for NHL games on ", matchDate)
+	outputGamesInformation(games, false)
+}
+
+// Displays information for selected games on standard out.
+func outputGamesInformation(games []Game, showDate bool) {
 	for _, game := range games {
+		if showDate {
+			fmt.Printf("%s - ", game.GameDate)
+		}
 		fmt.Printf(
 			"%s: %d vs %s: %d",
 			game.AwayTeam.Abbrev,
@@ -136,7 +128,6 @@ func fetchSchedule(matchDate string) {
 		} else {
 			fmt.Println()
 		}
-
 	}
 }
 
